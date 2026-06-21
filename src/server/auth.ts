@@ -29,7 +29,7 @@ export function authMiddleware(token: string): MiddlewareHandler {
         httpOnly: true,
         sameSite: 'Strict',
         path: '/',
-        maxAge: 60 * 60 * 24 * 365,
+        maxAge: 60 * 60 * 24 * 365 * 10, // 10 years — sign in once, stay in
       });
       return next();
     }
