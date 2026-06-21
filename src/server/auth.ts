@@ -5,6 +5,17 @@ import type { LoginThrottle } from './throttle.ts';
 
 const COOKIE = 'crs_token';
 
+// Non-sensitive static assets the browser fetches without credentials
+// (PWA manifest + icons). Exempt from auth so install / home-screen works.
+const PUBLIC_PATHS = new Set([
+  '/manifest.webmanifest',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/icon-maskable-512.png',
+  '/apple-touch-icon.png',
+  '/favicon.ico',
+]);
+
 export interface AuthOptions {
   throttle?: LoginThrottle;
   getIp?: (c: Context) => string;
@@ -52,6 +63,8 @@ export function authMiddleware(token: string, options: AuthOptions = {}): Middle
   const getIp = options.getIp ?? defaultGetIp;
 
   return async (c, next) => {
+    if (PUBLIC_PATHS.has(c.req.path)) return next();
+
     const ip = throttle ? getIp(c) : '';
 
     if (throttle) {

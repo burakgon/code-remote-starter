@@ -53,6 +53,15 @@ describe('authMiddleware', () => {
     expect(await res.text()).toContain('access token');
   });
 
+  it('serves PWA assets (manifest, icons) without a token', async () => {
+    const a = new Hono();
+    a.use('*', authMiddleware(TOKEN));
+    a.get('/manifest.webmanifest', (c) => c.json({ ok: true }));
+    a.get('/icon-512.png', (c) => c.text('png'));
+    expect((await a.request('/manifest.webmanifest')).status).toBe(200);
+    expect((await a.request('/icon-512.png')).status).toBe(200);
+  });
+
   it('locks an IP after more than 5 wrong-token attempts (429)', async () => {
     const throttle = new LoginThrottle();
     const a = new Hono();
