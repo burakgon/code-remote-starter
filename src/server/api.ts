@@ -40,12 +40,18 @@ export function createApi(deps: ApiDeps): Hono {
     return c.json({ session }, 201);
   });
 
+  app.post('/api/sessions/clear-ended', (c) => {
+    deps.sessions.clearEnded();
+    return c.json({ sessions: deps.sessions.list() });
+  });
+
   app.delete('/api/sessions/:id', async (c) => {
-    try {
-      await deps.sessions.stop(c.req.param('id'));
-    } catch {
-      return c.json({ error: 'not found' }, 404);
-    }
+    const id = c.req.param('id');
+    const session = deps.sessions.get(id);
+    if (!session) return c.json({ error: 'not found' }, 404);
+    // A running session is stopped (killed); an already-ended one is forgotten.
+    if (session.status === 'running') await deps.sessions.stop(id);
+    else deps.sessions.remove(id);
     return c.body(null, 204);
   });
 

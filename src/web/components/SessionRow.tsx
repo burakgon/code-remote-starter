@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pencil, Square } from 'lucide-react';
+import { Pencil, Square, X } from 'lucide-react';
 import type { Session } from '../lib/types.ts';
 import { relativeTime, tildePath } from '../lib/format.ts';
 import { StatusDot } from './StatusDot.tsx';
@@ -7,12 +7,14 @@ import { StatusDot } from './StatusDot.tsx';
 export function SessionRow({
   session,
   home,
-  onStop,
+  onRequestStop,
+  onDismiss,
   onRename,
 }: {
   session: Session;
   home: string | undefined;
-  onStop: (id: string) => void;
+  onRequestStop: (session: Session) => void;
+  onDismiss: (id: string) => void;
   onRename: (id: string, name: string) => void;
 }) {
   const running = session.status === 'running';
@@ -61,7 +63,7 @@ export function SessionRow({
       <span className="shrink-0 font-mono text-[10px] text-dim">
         {running ? relativeTime(session.startedAt) : 'ended'}
       </span>
-      {running && (
+      {running ? (
         <>
           <button
             type="button"
@@ -74,12 +76,21 @@ export function SessionRow({
           <button
             type="button"
             aria-label="Stop session"
-            onClick={() => onStop(session.id)}
+            onClick={() => onRequestStop(session)}
             className="grid size-7 place-items-center rounded-md text-faint transition-colors hover:text-accent"
           >
             <Square size={13} />
           </button>
         </>
+      ) : (
+        <button
+          type="button"
+          aria-label="Dismiss session"
+          onClick={() => onDismiss(session.id)}
+          className="grid size-7 place-items-center rounded-md text-faint transition-colors hover:text-fg"
+        >
+          <X size={14} />
+        </button>
       )}
     </div>
   );

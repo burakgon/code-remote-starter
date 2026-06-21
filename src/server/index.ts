@@ -2,7 +2,7 @@ import { serve } from '@hono/node-server';
 import { WebSocketServer } from 'ws';
 import type { IncomingMessage, Server } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { existsSync, readFileSync, realpathSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { networkInterfaces } from 'node:os';
@@ -97,22 +97,37 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
   const webDir = fileURLToPath(new URL('../../dist/web', import.meta.url));
   if (existsSync(join(webDir, 'index.html'))) {
     const indexHtml = readFileSync(join(webDir, 'index.html'), 'utf8');
+    const contentType = (file: string): string => {
+      if (file.endsWith('.js')) return 'text/javascript; charset=utf-8';
+      if (file.endsWith('.css')) return 'text/css; charset=utf-8';
+      if (file.endsWith('.png')) return 'image/png';
+      if (file.endsWith('.svg')) return 'image/svg+xml';
+      if (file.endsWith('.ico')) return 'image/x-icon';
+      if (file.endsWith('.webmanifest') || file.endsWith('.json'))
+        return 'application/manifest+json';
+      return 'application/octet-stream';
+    };
     api.get('/assets/*', (c) => {
       const file = join(webDir, c.req.path.replace(/^\/+/, ''));
       if (!file.startsWith(webDir) || !existsSync(file)) return c.notFound();
-      const type = file.endsWith('.js')
-        ? 'text/javascript; charset=utf-8'
-        : file.endsWith('.css')
-          ? 'text/css; charset=utf-8'
-          : 'application/octet-stream';
       return new Response(new Uint8Array(readFileSync(file)), {
         headers: {
-          'content-type': type,
+          'content-type': contentType(file),
           'cache-control': 'public, max-age=31536000, immutable',
         },
       });
     });
-    api.get('*', (c) => c.html(indexHtml));
+    // Serve other built files at the root (manifest, icons, favicon); fall back to the SPA.
+    api.get('*', (c) => {
+      const rel = c.req.path.replace(/^\/+/, '');
+      const file = join(webDir, rel);
+      if (rel && file.startsWith(webDir) && existsSync(file) && statSync(file).isFile()) {
+        return new Response(new Uint8Array(readFileSync(file)), {
+          headers: { 'content-type': contentType(file), 'cache-control': 'public, max-age=3600' },
+        });
+      }
+      return c.html(indexHtml);
+    });
   }
 
   const server = serve({ fetch: api.fetch, port, hostname: host }) as unknown as Server;

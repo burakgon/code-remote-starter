@@ -70,6 +70,27 @@ export class SessionManager {
     return session;
   }
 
+  get(id: string): Session | undefined {
+    return this.sessions.get(id);
+  }
+
+  /** Forget a session (used to dismiss an already-ended one from the list). */
+  remove(id: string): void {
+    if (this.sessions.delete(id)) this.emit();
+  }
+
+  /** Forget all ended sessions. */
+  clearEnded(): void {
+    let changed = false;
+    for (const [id, session] of this.sessions) {
+      if (session.status === 'ended') {
+        this.sessions.delete(id);
+        changed = true;
+      }
+    }
+    if (changed) this.emit();
+  }
+
   async refresh(): Promise<boolean> {
     const live = new Set(await this.tmux.listSessionNames());
     let changed = false;

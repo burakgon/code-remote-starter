@@ -77,6 +77,44 @@ describe('sessions API', () => {
     expect(res.status).toBe(404);
   });
 
+  it('DELETE on an ended session removes it from the list', async () => {
+    const created = (await (
+      await app.request('/api/sessions', {
+        method: 'POST',
+        headers: AUTH,
+        body: JSON.stringify({ dir: '/p/a', name: 'a' }),
+      })
+    ).json()) as { session: Session };
+    await app.request(`/api/sessions/${created.session.id}`, { method: 'DELETE', headers: AUTH });
+    expect(sessions.list()[0]!.status).toBe('ended');
+    const res = await app.request(`/api/sessions/${created.session.id}`, {
+      method: 'DELETE',
+      headers: AUTH,
+    });
+    expect(res.status).toBe(204);
+    expect(sessions.list()).toHaveLength(0);
+  });
+
+  it('POST /api/sessions/clear-ended removes ended sessions', async () => {
+    const a = (await (
+      await app.request('/api/sessions', {
+        method: 'POST',
+        headers: AUTH,
+        body: JSON.stringify({ dir: '/p/a', name: 'a' }),
+      })
+    ).json()) as { session: Session };
+    await app.request('/api/sessions', {
+      method: 'POST',
+      headers: AUTH,
+      body: JSON.stringify({ dir: '/p/b', name: 'b' }),
+    });
+    await app.request(`/api/sessions/${a.session.id}`, { method: 'DELETE', headers: AUTH });
+    const res = await app.request('/api/sessions/clear-ended', { method: 'POST', headers: AUTH });
+    expect(res.status).toBe(200);
+    expect(sessions.list()).toHaveLength(1);
+    expect(sessions.list()[0]!.status).toBe('running');
+  });
+
   it('PATCH renames a session', async () => {
     const created = (await (
       await app.request('/api/sessions', {

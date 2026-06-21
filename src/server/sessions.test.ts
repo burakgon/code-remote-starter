@@ -83,4 +83,22 @@ describe('SessionManager', () => {
     await m.stop(s.id);
     expect(events.length).toBeGreaterThanOrEqual(2);
   });
+
+  it('remove forgets a session', async () => {
+    const m = manager();
+    const s = await m.create({ dir: '/p/a', name: 'a' });
+    m.remove(s.id);
+    expect(m.list()).toHaveLength(0);
+  });
+
+  it('clearEnded forgets only ended sessions', async () => {
+    const m = manager();
+    const a = await m.create({ dir: '/p/a', name: 'a' });
+    await m.create({ dir: '/p/b', name: 'b' });
+    await m.stop(a.id);
+    m.clearEnded();
+    const list = m.list();
+    expect(list).toHaveLength(1);
+    expect(list[0]!.name).toBe('b');
+  });
 });

@@ -61,6 +61,7 @@ export const api = {
       body: JSON.stringify({ dir, name }),
     }),
   stopSession: (id: string) => req<void>(`/api/sessions/${id}`, { method: 'DELETE' }),
+  clearEnded: () => req<{ sessions: Session[] }>('/api/sessions/clear-ended', { method: 'POST' }),
   renameSession: (id: string, name: string) =>
     req<{ session: Session }>(`/api/sessions/${id}`, {
       method: 'PATCH',
