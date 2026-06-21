@@ -2,7 +2,7 @@ import type { Bookmark, DirListing, Meta, Session, RecentDir } from './types.ts'
 
 // Capture the token from the URL on first load, remember it, and tidy the URL.
 const params = new URLSearchParams(window.location.search);
-let token = params.get('token') ?? sessionStorage.getItem('crs_token') ?? '';
+const token = params.get('token') ?? sessionStorage.getItem('crs_token') ?? '';
 if (params.get('token')) {
   sessionStorage.setItem('crs_token', token);
   params.delete('token');
@@ -56,14 +56,23 @@ export const api = {
   meta: () => req<Meta>('/api/meta'),
   listSessions: () => req<{ sessions: Session[] }>('/api/sessions'),
   createSession: (dir: string, name: string) =>
-    req<{ session: Session }>('/api/sessions', { method: 'POST', body: JSON.stringify({ dir, name }) }),
+    req<{ session: Session }>('/api/sessions', {
+      method: 'POST',
+      body: JSON.stringify({ dir, name }),
+    }),
   stopSession: (id: string) => req<void>(`/api/sessions/${id}`, { method: 'DELETE' }),
   renameSession: (id: string, name: string) =>
-    req<{ session: Session }>(`/api/sessions/${id}`, { method: 'PATCH', body: JSON.stringify({ name }) }),
+    req<{ session: Session }>(`/api/sessions/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ name }),
+    }),
   listDir: (path: string) => req<DirListing>(`/api/fs?path=${encodeURIComponent(path)}`),
   listBookmarks: () => req<{ bookmarks: Bookmark[] }>('/api/bookmarks'),
   addBookmark: (path: string, label?: string) =>
-    req<{ bookmark: Bookmark }>('/api/bookmarks', { method: 'POST', body: JSON.stringify({ path, label }) }),
+    req<{ bookmark: Bookmark }>('/api/bookmarks', {
+      method: 'POST',
+      body: JSON.stringify({ path, label }),
+    }),
   removeBookmark: (id: string) => req<void>(`/api/bookmarks/${id}`, { method: 'DELETE' }),
   listRecent: () => req<{ recent: RecentDir[] }>('/api/recent'),
 };

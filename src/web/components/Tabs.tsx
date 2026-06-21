@@ -17,7 +17,9 @@ export function Tabs<T extends string>({
             type="button"
             onClick={() => onChange(t.id)}
             className={`flex-1 rounded-lg border py-1.5 text-[11px] font-semibold transition-colors ${
-              on ? 'border-accent/40 bg-accent/15 text-accent' : 'border-line text-dim hover:text-fg'
+              on
+                ? 'border-accent/40 bg-accent/15 text-accent'
+                : 'border-line text-dim hover:text-fg'
             }`}
           >
             {t.label}

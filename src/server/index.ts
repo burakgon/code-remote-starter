@@ -1,5 +1,4 @@
 import { serve } from '@hono/node-server';
-import { serveStatic } from '@hono/node-server/serve-static';
 import { WebSocketServer } from 'ws';
 import type { IncomingMessage, Server } from 'node:http';
 import { fileURLToPath } from 'node:url';
@@ -79,11 +78,26 @@ export function main(argv = process.argv.slice(2)): void {
     },
   });
 
-  // Serve the built SPA (when present) behind the same auth + port.
+  // Serve the built SPA (when present) behind the same auth + port. Paths resolve
+  // relative to this file, so it works from any cwd (dev, built, or installed).
   const webDir = fileURLToPath(new URL('../../dist/web', import.meta.url));
-  if (existsSync(webDir)) {
+  if (existsSync(join(webDir, 'index.html'))) {
     const indexHtml = readFileSync(join(webDir, 'index.html'), 'utf8');
-    api.use('/assets/*', serveStatic({ root: 'dist/web' }));
+    api.get('/assets/*', (c) => {
+      const file = join(webDir, c.req.path.replace(/^\/+/, ''));
+      if (!file.startsWith(webDir) || !existsSync(file)) return c.notFound();
+      const type = file.endsWith('.js')
+        ? 'text/javascript; charset=utf-8'
+        : file.endsWith('.css')
+          ? 'text/css; charset=utf-8'
+          : 'application/octet-stream';
+      return new Response(new Uint8Array(readFileSync(file)), {
+        headers: {
+          'content-type': type,
+          'cache-control': 'public, max-age=31536000, immutable',
+        },
+      });
+    });
     api.get('*', (c) => c.html(indexHtml));
   }
 

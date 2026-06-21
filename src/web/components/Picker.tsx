@@ -12,7 +12,13 @@ import { FolderRow } from './FolderRow.tsx';
 
 type Tab = 'browse' | 'bookmarks' | 'recent';
 
-export function Picker({ onClose, onChoose }: { onClose: () => void; onChoose: (dir: string) => void }) {
+export function Picker({
+  onClose,
+  onChoose,
+}: {
+  onClose: () => void;
+  onChoose: (dir: string) => void;
+}) {
   const qc = useQueryClient();
   const toast = useToast();
   const meta = useQuery({ queryKey: ['meta'], queryFn: api.meta });
@@ -66,7 +72,11 @@ export function Picker({ onClose, onChoose }: { onClose: () => void; onChoose: (
     <Sheet onClose={onClose} ariaLabel="Choose a directory" full>
       <div className="flex items-center justify-between px-4 pb-3 pt-4">
         <span className="text-[14px] font-semibold">Choose a directory</span>
-        <button type="button" onClick={onClose} className="text-[13px] text-dim transition-colors hover:text-fg">
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-[13px] text-dim transition-colors hover:text-fg"
+        >
           Close
         </button>
       </div>
@@ -99,7 +109,9 @@ export function Picker({ onClose, onChoose }: { onClose: () => void; onChoose: (
 
           <div className="min-h-0 flex-1 overflow-y-auto px-2.5 pb-3">
             {listing.isError ? (
-              <p className="px-2 py-6 text-center text-[12.5px] text-dim">{errorMessage(listing.error)}</p>
+              <p className="px-2 py-6 text-center text-[12.5px] text-dim">
+                {errorMessage(listing.error)}
+              </p>
             ) : entries.length === 0 ? (
               <p className="px-2 py-6 text-center text-[12.5px] text-dim">
                 {listing.isLoading ? 'Loading…' : 'No subfolders here.'}
@@ -133,7 +145,9 @@ export function Picker({ onClose, onChoose }: { onClose: () => void; onChoose: (
               </button>
               <div className="flex min-w-0 flex-1 flex-col">
                 <span className="text-[8px] uppercase tracking-[0.07em] text-faint">Selected</span>
-                <span className="truncate font-mono text-[10.5px] text-muted">{tildePath(target, home)}</span>
+                <span className="truncate font-mono text-[10.5px] text-muted">
+                  {tildePath(target, home)}
+                </span>
               </div>
               <button
                 type="button"
@@ -168,7 +182,9 @@ export function Picker({ onClose, onChoose }: { onClose: () => void; onChoose: (
                     <Star size={14} className="shrink-0 text-accent" fill="currentColor" />
                     <span className="min-w-0">
                       <span className="block truncate text-[13px] font-medium">{b.label}</span>
-                      <span className="block truncate font-mono text-[10px] text-dim">{tildePath(b.path, home)}</span>
+                      <span className="block truncate font-mono text-[10px] text-dim">
+                        {tildePath(b.path, home)}
+                      </span>
                     </span>
                   </button>
                   <button
@@ -189,7 +205,9 @@ export function Picker({ onClose, onChoose }: { onClose: () => void; onChoose: (
       {tab === 'recent' && (
         <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
           {(recent.data?.recent ?? []).length === 0 ? (
-            <p className="px-2 py-8 text-center text-[12.5px] text-dim">No recent directories yet.</p>
+            <p className="px-2 py-8 text-center text-[12.5px] text-dim">
+              No recent directories yet.
+            </p>
           ) : (
             <div className="flex flex-col gap-1">
               {recent.data?.recent.map((r) => (
@@ -201,10 +219,16 @@ export function Picker({ onClose, onChoose }: { onClose: () => void; onChoose: (
                 >
                   <Clock size={14} className="shrink-0 text-faint" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] font-medium">{basename(r.path)}</span>
-                    <span className="block truncate font-mono text-[10px] text-dim">{tildePath(r.path, home)}</span>
+                    <span className="block truncate text-[13px] font-medium">
+                      {basename(r.path)}
+                    </span>
+                    <span className="block truncate font-mono text-[10px] text-dim">
+                      {tildePath(r.path, home)}
+                    </span>
                   </span>
-                  <span className="shrink-0 font-mono text-[9.5px] text-faint">{relativeTime(r.lastUsedAt)}</span>
+                  <span className="shrink-0 font-mono text-[9.5px] text-faint">
+                    {relativeTime(r.lastUsedAt)}
+                  </span>
                 </button>
               ))}
             </div>

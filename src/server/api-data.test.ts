@@ -98,9 +98,9 @@ describe('data API', () => {
     const del = await app.request(`/api/bookmarks/${a.id}`, { method: 'DELETE', headers: AUTH });
     expect(del.status).toBe(204);
 
-    const list = (await (
-      await app.request('/api/bookmarks', { headers: AUTH })
-    ).json()) as { bookmarks: Bookmark[] };
+    const list = (await (await app.request('/api/bookmarks', { headers: AUTH })).json()) as {
+      bookmarks: Bookmark[];
+    };
     expect(list.bookmarks).toHaveLength(1);
   });
 

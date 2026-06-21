@@ -45,12 +45,16 @@ export function ConfirmSheet({
           <Folder size={17} className="shrink-0 text-accent" />
           <div className="flex min-w-0 flex-col">
             <span className="truncate text-[13px] font-semibold">{basename(dir)}</span>
-            <span className="truncate font-mono text-[10px] text-dim">{tildePath(dir, meta.data?.home)}</span>
+            <span className="truncate font-mono text-[10px] text-dim">
+              {tildePath(dir, meta.data?.home)}
+            </span>
           </div>
         </div>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-faint">Session name</span>
+          <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-faint">
+            Session name
+          </span>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -65,7 +69,9 @@ export function ConfirmSheet({
 
         {meta.data?.baseCommand && (
           <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-faint">Command</span>
+            <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-faint">
+              Command
+            </span>
             <code className="block overflow-x-auto rounded-xl border border-line-soft bg-surface-2 px-3 py-2.5 font-mono text-[10.5px] leading-relaxed text-dim">
               {meta.data.baseCommand}
             </code>

@@ -8,7 +8,9 @@ export function StatusDot({ status }: { status: SessionStatus }) {
       style={{
         background: color,
         boxShadow:
-          status === 'running' ? `0 0 0 3px color-mix(in oklab, ${color} 16%, transparent)` : 'none',
+          status === 'running'
+            ? `0 0 0 3px color-mix(in oklab, ${color} 16%, transparent)`
+            : 'none',
       }}
     />
   );

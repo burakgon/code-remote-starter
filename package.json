@@ -4,6 +4,32 @@
   "description": "Start Claude Code sessions in any directory, from your phone.",
   "type": "module",
   "license": "MIT",
+  "author": "burakgon",
+  "homepage": "https://github.com/burakgon/code-remote-starter#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/burakgon/code-remote-starter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/burakgon/code-remote-starter/issues"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "remote-control",
+    "tmux",
+    "cli",
+    "mobile",
+    "developer-tools"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "bin": {
     "code-remote-starter": "dist/server/index.js",
     "crs": "dist/server/index.js"
@@ -12,12 +38,17 @@
     "dev": "concurrently -k -n server,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\"",
     "dev:server": "tsx watch src/server/index.ts",
     "dev:web": "vite",
-    "build": "vite build",
+    "build": "npm run build:web && npm run build:server",
+    "build:web": "vite build",
+    "build:server": "tsup",
     "start": "tsx src/server/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.0",
@@ -31,6 +62,7 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.13.0",
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
@@ -38,9 +70,15 @@
     "@types/ws": "^8.5.0",
     "@vitejs/plugin-react": "^4.3.0",
     "concurrently": "^9.1.0",
+    "eslint": "^9.13.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "globals": "^15.11.0",
+    "prettier": "^3.3.0",
     "tailwindcss": "^4.0.0",
+    "tsup": "^8.3.0",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0",
+    "typescript-eslint": "^8.10.0",
     "vite": "^5.4.0",
     "vitest": "^2.1.0"
   }

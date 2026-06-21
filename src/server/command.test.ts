@@ -11,14 +11,10 @@ describe('buildSessionCommand', () => {
   });
 
   it('escapes single quotes in the name', () => {
-    expect(buildSessionCommand(BASE, "my'proj")).toBe(
-      `${BASE} --remote-control 'my'\\''proj'`,
-    );
+    expect(buildSessionCommand(BASE, "my'proj")).toBe(`${BASE} --remote-control 'my'\\''proj'`);
   });
 
   it('handles names with spaces', () => {
-    expect(buildSessionCommand(BASE, 'hello world')).toBe(
-      `${BASE} --remote-control 'hello world'`,
-    );
+    expect(buildSessionCommand(BASE, 'hello world')).toBe(`${BASE} --remote-control 'hello world'`);
   });
 });

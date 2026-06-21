@@ -23,9 +23,7 @@ afterEach(() => {
 
 describe('claudeEncode', () => {
   it('replaces slashes with dashes', () => {
-    expect(claudeEncode('/Users/x/Developer/code-starter')).toBe(
-      '-Users-x-Developer-code-starter',
-    );
+    expect(claudeEncode('/Users/x/Developer/code-starter')).toBe('-Users-x-Developer-code-starter');
   });
 });
 
