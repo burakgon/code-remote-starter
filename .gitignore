@@ -1,0 +1,28 @@
+# Brainstorm / visual companion artifacts
+.superpowers/
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Local config / secrets
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# Test / coverage
+coverage/
+playwright-report/
+test-results/
