@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Hono } from 'hono';
-import { authMiddleware } from './auth.ts';
+import { authMiddleware, resolveClientIp } from './auth.ts';
 import { LoginThrottle } from './throttle.ts';
 
 const TOKEN = 'a'.repeat(64);
@@ -79,5 +79,21 @@ describe('authMiddleware', () => {
     }
     // never supplied a wrong token, so a correct one still works
     expect((await a.request(`/api/ping?token=${TOKEN}`)).status).toBe(200);
+  });
+});
+
+describe('resolveClientIp', () => {
+  it('uses CF-Connecting-IP when the socket is loopback (tunnel traffic)', () => {
+    expect(resolveClientIp('127.0.0.1', '203.0.113.7')).toBe('203.0.113.7');
+    expect(resolveClientIp('::1', '203.0.113.7')).toBe('203.0.113.7');
+    expect(resolveClientIp('::ffff:127.0.0.1', '203.0.113.7')).toBe('203.0.113.7');
+  });
+  it('ignores CF-Connecting-IP on a direct, non-loopback connection (anti-spoof)', () => {
+    expect(resolveClientIp('100.72.57.9', '1.2.3.4')).toBe('100.72.57.9');
+    expect(resolveClientIp('192.168.1.5', '1.2.3.4')).toBe('192.168.1.5');
+  });
+  it('falls back to the socket IP when there is no CF header', () => {
+    expect(resolveClientIp('127.0.0.1', undefined)).toBe('127.0.0.1');
+    expect(resolveClientIp(undefined, undefined)).toBe('unknown');
   });
 });

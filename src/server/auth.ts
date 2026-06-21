@@ -10,12 +10,33 @@ export interface AuthOptions {
   getIp?: (c: Context) => string;
 }
 
+/** Loopback means the request arrived from the local cloudflared tunnel. */
+export function isLoopbackAddr(ip: string | undefined): boolean {
+  if (!ip) return false;
+  return ip === '::1' || ip === '::ffff:127.0.0.1' || ip.startsWith('127.');
+}
+
+/**
+ * Resolve the real client IP. Behind the Cloudflare tunnel every request arrives
+ * from loopback, so trust Cloudflare's CF-Connecting-IP header in that case. On a
+ * direct (non-loopback) connection the header is untrusted (spoofable) and ignored.
+ */
+export function resolveClientIp(
+  socketIp: string | undefined,
+  cfConnectingIp: string | undefined,
+): string {
+  if (isLoopbackAddr(socketIp) && cfConnectingIp) return cfConnectingIp;
+  return socketIp ?? 'unknown';
+}
+
 function defaultGetIp(c: Context): string {
+  let socketIp: string | undefined;
   try {
-    return getConnInfo(c).remote.address ?? 'unknown';
+    socketIp = getConnInfo(c).remote.address;
   } catch {
-    return 'unknown';
+    socketIp = undefined;
   }
+  return resolveClientIp(socketIp, c.req.header('CF-Connecting-IP'));
 }
 
 export function authMiddleware(token: string, options: AuthOptions = {}): MiddlewareHandler {
