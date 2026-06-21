@@ -2,9 +2,9 @@ import type { Bookmark, DirListing, Meta, Session, RecentDir } from './types.ts'
 
 // Capture the token from the URL on first load, remember it, and tidy the URL.
 const params = new URLSearchParams(window.location.search);
-const token = params.get('token') ?? sessionStorage.getItem('crs_token') ?? '';
+const token = params.get('token') ?? localStorage.getItem('crs_token') ?? '';
 if (params.get('token')) {
-  sessionStorage.setItem('crs_token', token);
+  localStorage.setItem('crs_token', token);
   params.delete('token');
   const query = params.toString();
   window.history.replaceState({}, '', window.location.pathname + (query ? `?${query}` : ''));

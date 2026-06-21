@@ -29,7 +29,8 @@ export function authMiddleware(token: string): MiddlewareHandler {
         httpOnly: true,
         sameSite: 'Strict',
         path: '/',
-        maxAge: 60 * 60 * 24 * 365 * 10, // 10 years — sign in once, stay in
+        maxAge: 60 * 60 * 24 * 400, // 400 days = the cookie maximum; the token is also
+        // kept on-device in localStorage, so sign-in effectively never expires.
       });
       return next();
     }
