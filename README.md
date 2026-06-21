@@ -96,8 +96,9 @@ roadmap.
   is tidied so the token isn't left in the address bar.
 - State-changing requests are checked against an `Origin` allowlist (CSRF guard).
 - Brute-force protection: more than 5 wrong-token attempts from an IP within an hour locks
-  that IP for 30 minutes. Behind a Cloudflare tunnel the real client IP (`CF-Connecting-IP`)
-  is used, so the lock targets the actual attacker rather than the tunnel's loopback address.
+  that IP for 30 minutes. Behind a local reverse proxy or tunnel (Cloudflare, nginx, …) the
+  forwarded client IP (`CF-Connecting-IP` / `X-Forwarded-For`) is used so the lock targets the
+  real attacker; on direct connections those headers are ignored to prevent spoofing.
 - Nothing leaves your machine except Claude Code's own traffic.
 
 ## Configuration

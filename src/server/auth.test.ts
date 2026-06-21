@@ -83,17 +83,26 @@ describe('authMiddleware', () => {
 });
 
 describe('resolveClientIp', () => {
-  it('uses CF-Connecting-IP when the socket is loopback (tunnel traffic)', () => {
-    expect(resolveClientIp('127.0.0.1', '203.0.113.7')).toBe('203.0.113.7');
-    expect(resolveClientIp('::1', '203.0.113.7')).toBe('203.0.113.7');
-    expect(resolveClientIp('::ffff:127.0.0.1', '203.0.113.7')).toBe('203.0.113.7');
+  it('uses CF-Connecting-IP when the socket is loopback (Cloudflare tunnel)', () => {
+    expect(resolveClientIp('127.0.0.1', { cfConnectingIp: '203.0.113.7' })).toBe('203.0.113.7');
+    expect(resolveClientIp('::1', { cfConnectingIp: '203.0.113.7' })).toBe('203.0.113.7');
+    expect(resolveClientIp('::ffff:127.0.0.1', { cfConnectingIp: '203.0.113.7' })).toBe(
+      '203.0.113.7',
+    );
   });
-  it('ignores CF-Connecting-IP on a direct, non-loopback connection (anti-spoof)', () => {
-    expect(resolveClientIp('100.72.57.9', '1.2.3.4')).toBe('100.72.57.9');
-    expect(resolveClientIp('192.168.1.5', '1.2.3.4')).toBe('192.168.1.5');
+  it('falls back to X-Forwarded-For for a generic local proxy', () => {
+    expect(resolveClientIp('127.0.0.1', { forwardedFor: '198.51.100.4, 10.0.0.1' })).toBe(
+      '198.51.100.4',
+    );
   });
-  it('falls back to the socket IP when there is no CF header', () => {
-    expect(resolveClientIp('127.0.0.1', undefined)).toBe('127.0.0.1');
-    expect(resolveClientIp(undefined, undefined)).toBe('unknown');
+  it('ignores forwarding headers on a direct, non-loopback connection (anti-spoof)', () => {
+    expect(
+      resolveClientIp('100.72.57.9', { cfConnectingIp: '1.2.3.4', forwardedFor: '5.6.7.8' }),
+    ).toBe('100.72.57.9');
+  });
+  it('uses the socket IP when there are no forwarding headers (direct deployment)', () => {
+    expect(resolveClientIp('203.0.113.50', {})).toBe('203.0.113.50');
+    expect(resolveClientIp('127.0.0.1', {})).toBe('127.0.0.1');
+    expect(resolveClientIp(undefined, {})).toBe('unknown');
   });
 });

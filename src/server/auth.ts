@@ -17,15 +17,20 @@ export function isLoopbackAddr(ip: string | undefined): boolean {
 }
 
 /**
- * Resolve the real client IP. Behind the Cloudflare tunnel every request arrives
- * from loopback, so trust Cloudflare's CF-Connecting-IP header in that case. On a
- * direct (non-loopback) connection the header is untrusted (spoofable) and ignored.
+ * Resolve the real client IP. A loopback socket means the request came through a
+ * local reverse proxy or tunnel (Cloudflare, nginx, …), so trust its forwarded
+ * client-IP header. On a direct connection (the default, no proxy) the headers are
+ * untrusted (spoofable) and the socket address is used. Works either way.
  */
 export function resolveClientIp(
   socketIp: string | undefined,
-  cfConnectingIp: string | undefined,
+  headers: { cfConnectingIp?: string; forwardedFor?: string },
 ): string {
-  if (isLoopbackAddr(socketIp) && cfConnectingIp) return cfConnectingIp;
+  if (isLoopbackAddr(socketIp)) {
+    if (headers.cfConnectingIp) return headers.cfConnectingIp;
+    const first = headers.forwardedFor?.split(',')[0]?.trim();
+    if (first) return first;
+  }
   return socketIp ?? 'unknown';
 }
 
@@ -36,7 +41,10 @@ function defaultGetIp(c: Context): string {
   } catch {
     socketIp = undefined;
   }
-  return resolveClientIp(socketIp, c.req.header('CF-Connecting-IP'));
+  return resolveClientIp(socketIp, {
+    cfConnectingIp: c.req.header('CF-Connecting-IP'),
+    forwardedFor: c.req.header('X-Forwarded-For'),
+  });
 }
 
 export function authMiddleware(token: string, options: AuthOptions = {}): MiddlewareHandler {
