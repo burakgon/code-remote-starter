@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { Pencil, Square } from 'lucide-react';
 import type { Session } from '../lib/types.ts';
-import { relativeTime } from '../lib/format.ts';
+import { relativeTime, tildePath } from '../lib/format.ts';
 import { StatusDot } from './StatusDot.tsx';
 
 export function SessionRow({
   session,
+  home,
   onStop,
   onRename,
 }: {
   session: Session;
+  home: string | undefined;
   onStop: (id: string) => void;
   onRename: (id: string, name: string) => void;
 }) {
@@ -27,30 +29,35 @@ export function SessionRow({
   return (
     <div className="flex items-center gap-3 rounded-xl border border-line bg-surface px-3 py-2.5">
       <StatusDot status={session.status} />
-      {editing ? (
-        <input
-          autoFocus
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={commit}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') commit();
-            if (e.key === 'Escape') {
-              setDraft(session.name);
-              setEditing(false);
-            }
-          }}
-          className="min-w-0 flex-1 rounded-md bg-bg px-1.5 py-0.5 text-[13.5px] outline-none ring-1 ring-line focus:ring-accent"
-        />
-      ) : (
-        <button
-          type="button"
-          onClick={() => running && setEditing(true)}
-          className={`min-w-0 flex-1 truncate text-left text-[13.5px] font-medium ${running ? '' : 'text-dim'}`}
-        >
-          {session.name}
-        </button>
-      )}
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        {editing ? (
+          <input
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commit();
+              if (e.key === 'Escape') {
+                setDraft(session.name);
+                setEditing(false);
+              }
+            }}
+            className="w-full rounded-md bg-bg px-1.5 py-0.5 text-[13.5px] outline-none ring-1 ring-line focus:ring-accent"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => running && setEditing(true)}
+            className={`truncate text-left text-[13.5px] font-medium ${running ? '' : 'text-dim'}`}
+          >
+            {session.name}
+          </button>
+        )}
+        <span className="truncate font-mono text-[10px] text-faint">
+          {tildePath(session.dir, home)}
+        </span>
+      </div>
       <span className="shrink-0 font-mono text-[10px] text-dim">
         {running ? relativeTime(session.startedAt) : 'ended'}
       </span>

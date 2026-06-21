@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { api, errorMessage } from '../lib/api.ts';
 import { useSessions } from '../lib/useSessions.ts';
@@ -10,6 +11,8 @@ import { SessionRow } from './SessionRow.tsx';
 
 export function Home({ onNew }: { onNew: () => void }) {
   const { sessions, connected } = useSessions();
+  const meta = useQuery({ queryKey: ['meta'], queryFn: api.meta });
+  const home = meta.data?.home;
   const toast = useToast();
   useTick(30_000);
 
@@ -41,7 +44,7 @@ export function Home({ onNew }: { onNew: () => void }) {
         ) : (
           <div className="flex flex-col gap-2">
             {running.map((s) => (
-              <SessionRow key={s.id} session={s} onStop={stop} onRename={rename} />
+              <SessionRow key={s.id} session={s} home={home} onStop={stop} onRename={rename} />
             ))}
           </div>
         )}
@@ -51,7 +54,7 @@ export function Home({ onNew }: { onNew: () => void }) {
         <Section label="Ended">
           <div className="flex flex-col gap-2">
             {ended.map((s) => (
-              <SessionRow key={s.id} session={s} onStop={stop} onRename={rename} />
+              <SessionRow key={s.id} session={s} home={home} onStop={stop} onRename={rename} />
             ))}
           </div>
         </Section>
