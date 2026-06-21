@@ -11,5 +11,5 @@ export default defineConfig({
   banner: { js: '#!/usr/bin/env node' },
   clean: false,
   splitting: false,
-  external: ['@hono/node-server', 'hono', 'ws', 'zod', 'qrcode'],
+  external: ['@hono/node-server', '@hono/node-server/conninfo', 'hono', 'ws', 'zod', 'qrcode'],
 });

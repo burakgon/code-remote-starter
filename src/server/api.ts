@@ -2,6 +2,7 @@ import { homedir } from 'node:os';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { authMiddleware } from './auth.ts';
+import { LoginThrottle } from './throttle.ts';
 import type { SessionManager } from './sessions.ts';
 import type { BookmarkStore } from './bookmarks.ts';
 import type { DirListing } from './fs.ts';
@@ -24,7 +25,8 @@ export interface ApiDeps {
 
 export function createApi(deps: ApiDeps): Hono {
   const app = new Hono();
-  app.use('*', authMiddleware(deps.token));
+  const throttle = new LoginThrottle();
+  app.use('*', authMiddleware(deps.token, { throttle }));
 
   app.get('/api/meta', (c) => c.json({ baseCommand: deps.baseCommand ?? '', home: homedir() }));
 

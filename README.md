@@ -95,6 +95,8 @@ roadmap.
 - The token arrives once via `?token=…`, then is kept in a `Strict`, `httpOnly` cookie; the URL
   is tidied so the token isn't left in the address bar.
 - State-changing requests are checked against an `Origin` allowlist (CSRF guard).
+- Brute-force protection: more than 5 wrong-token attempts from an IP within an hour locks
+  that IP for 30 minutes.
 - Nothing leaves your machine except Claude Code's own traffic.
 
 ## Configuration

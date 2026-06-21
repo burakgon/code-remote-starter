@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Hono } from 'hono';
 import { authMiddleware } from './auth.ts';
+import { LoginThrottle } from './throttle.ts';
 
 const TOKEN = 'a'.repeat(64);
 function app() {
@@ -50,5 +51,33 @@ describe('authMiddleware', () => {
     expect(res.status).toBe(401);
     expect(res.headers.get('content-type')).toContain('text/html');
     expect(await res.text()).toContain('access token');
+  });
+
+  it('locks an IP after more than 5 wrong-token attempts (429)', async () => {
+    const throttle = new LoginThrottle();
+    const a = new Hono();
+    a.use('*', authMiddleware(TOKEN, { throttle, getIp: () => '9.9.9.9' }));
+    a.get('/api/ping', (c) => c.json({ ok: true }));
+
+    for (let i = 0; i < 5; i++) {
+      expect((await a.request('/api/ping?token=bad')).status).toBe(401);
+    }
+    // 6th wrong attempt locks the IP
+    expect((await a.request('/api/ping?token=bad')).status).toBe(429);
+    // even the correct token is refused while locked
+    expect((await a.request(`/api/ping?token=${TOKEN}`)).status).toBe(429);
+  });
+
+  it('does not count a missing token toward the lock', async () => {
+    const throttle = new LoginThrottle();
+    const a = new Hono();
+    a.use('*', authMiddleware(TOKEN, { throttle, getIp: () => '8.8.8.8' }));
+    a.get('/api/ping', (c) => c.json({ ok: true }));
+
+    for (let i = 0; i < 10; i++) {
+      expect((await a.request('/api/ping')).status).toBe(401);
+    }
+    // never supplied a wrong token, so a correct one still works
+    expect((await a.request(`/api/ping?token=${TOKEN}`)).status).toBe(200);
   });
 });

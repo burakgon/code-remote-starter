@@ -1,10 +1,40 @@
-import type { MiddlewareHandler } from 'hono';
+import type { Context, MiddlewareHandler } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
+import { getConnInfo } from '@hono/node-server/conninfo';
+import type { LoginThrottle } from './throttle.ts';
 
 const COOKIE = 'crs_token';
 
-export function authMiddleware(token: string): MiddlewareHandler {
+export interface AuthOptions {
+  throttle?: LoginThrottle;
+  getIp?: (c: Context) => string;
+}
+
+function defaultGetIp(c: Context): string {
+  try {
+    return getConnInfo(c).remote.address ?? 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
+export function authMiddleware(token: string, options: AuthOptions = {}): MiddlewareHandler {
+  const throttle = options.throttle;
+  const getIp = options.getIp ?? defaultGetIp;
+
   return async (c, next) => {
+    const ip = throttle ? getIp(c) : '';
+
+    if (throttle) {
+      const remaining = throttle.lockedFor(ip);
+      if (remaining > 0) {
+        return c.json(
+          { error: 'too many attempts', retryAfterSeconds: Math.ceil(remaining / 1000) },
+          429,
+        );
+      }
+    }
+
     // CSRF guard: for state-changing methods, reject mismatched Origin.
     if (c.req.method !== 'GET' && c.req.method !== 'HEAD') {
       const origin = c.req.header('Origin');
@@ -21,10 +51,14 @@ export function authMiddleware(token: string): MiddlewareHandler {
     }
 
     const cookie = getCookie(c, COOKIE);
-    if (cookie === token) return next();
+    if (cookie === token) {
+      throttle?.recordSuccess(ip);
+      return next();
+    }
 
     const query = c.req.query('token');
     if (query === token) {
+      throttle?.recordSuccess(ip);
       setCookie(c, COOKIE, token, {
         httpOnly: true,
         sameSite: 'Strict',
@@ -33,6 +67,15 @@ export function authMiddleware(token: string): MiddlewareHandler {
         // kept on-device in localStorage, so sign-in effectively never expires.
       });
       return next();
+    }
+
+    // A wrong token was supplied (not merely missing) -> count toward the IP lock.
+    const suppliedWrong = (!!query && query !== token) || (!!cookie && cookie !== token);
+    if (throttle && suppliedWrong) {
+      throttle.recordFailure(ip);
+      if (throttle.lockedFor(ip) > 0) {
+        return c.json({ error: 'too many attempts' }, 429);
+      }
     }
 
     if (c.req.path.startsWith('/api')) return c.json({ error: 'unauthorized' }, 401);
