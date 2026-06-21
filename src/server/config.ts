@@ -38,3 +38,17 @@ export function saveConfig(config: AppConfig, dir: string = getConfigDir()): voi
   mkdirSync(dir, { recursive: true, mode: 0o700 });
   writeFileSync(join(dir, 'config.json'), JSON.stringify(config, null, 2), { mode: 0o600 });
 }
+
+/** Record (or bump) a launched directory in the history. Mutates and returns config. */
+export function recordLaunch(config: AppConfig, path: string, now: number = Date.now()): AppConfig {
+  const existing = config.launchHistory.find((e) => e.path === path);
+  if (existing) {
+    existing.lastLaunchedAt = now;
+    existing.count += 1;
+  } else {
+    config.launchHistory.push({ path, lastLaunchedAt: now, count: 1 });
+  }
+  config.launchHistory.sort((a, b) => b.lastLaunchedAt - a.lastLaunchedAt);
+  config.launchHistory = config.launchHistory.slice(0, 50);
+  return config;
+}

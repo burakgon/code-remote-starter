@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, rmSync, existsSync, statSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { loadConfig, saveConfig, generateToken } from './config.ts';
+import { loadConfig, saveConfig, generateToken, recordLaunch } from './config.ts';
 
 let dir: string;
 beforeEach(() => {
@@ -44,5 +44,27 @@ describe('config', () => {
     cfg.port = 5000;
     saveConfig(cfg, dir);
     expect(JSON.parse(readFileSync(join(dir, 'config.json'), 'utf8')).port).toBe(5000);
+  });
+});
+
+describe('recordLaunch', () => {
+  it('adds a new entry with count 1', () => {
+    const cfg = loadConfig(dir);
+    recordLaunch(cfg, '/p/a', 1000);
+    expect(cfg.launchHistory).toEqual([{ path: '/p/a', lastLaunchedAt: 1000, count: 1 }]);
+  });
+
+  it('bumps count and time on repeat', () => {
+    const cfg = loadConfig(dir);
+    recordLaunch(cfg, '/p/a', 1000);
+    recordLaunch(cfg, '/p/a', 2000);
+    expect(cfg.launchHistory[0]).toEqual({ path: '/p/a', lastLaunchedAt: 2000, count: 2 });
+  });
+
+  it('keeps most-recent first', () => {
+    const cfg = loadConfig(dir);
+    recordLaunch(cfg, '/p/a', 1000);
+    recordLaunch(cfg, '/p/b', 2000);
+    expect(cfg.launchHistory.map((e) => e.path)).toEqual(['/p/b', '/p/a']);
   });
 });

@@ -4,11 +4,14 @@ import type { IncomingMessage, Server } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { realpathSync } from 'node:fs';
 import { execFile } from 'node:child_process';
-import { loadConfig, saveConfig } from './config.ts';
+import { getConfigDir, loadConfig, saveConfig, recordLaunch } from './config.ts';
 import { createTmux } from './tmux.ts';
 import { SessionManager } from './sessions.ts';
 import { createApi } from './api.ts';
 import { SessionBroadcaster } from './ws.ts';
+import { BookmarkStore } from './bookmarks.ts';
+import { listDirectory } from './fs.ts';
+import { recentDirectories } from './recent.ts';
 
 export interface CliArgs {
   port?: number;
@@ -45,15 +48,27 @@ function tokenFromCookie(req: IncomingMessage): string | undefined {
 
 export function main(argv = process.argv.slice(2)): void {
   const cli = parseArgs(argv);
-  const config = loadConfig();
+  const configDir = getConfigDir();
+  const config = loadConfig(configDir);
   if (cli.command) config.baseCommand = cli.command;
   const port = cli.port ?? config.port;
   const host = cli.host ?? config.host;
-  saveConfig(config);
+  saveConfig(config, configDir);
 
   const sessions = new SessionManager({ tmux: createTmux(), baseCommand: config.baseCommand });
   const broadcaster = new SessionBroadcaster(sessions);
-  const api = createApi({ sessions, token: config.token });
+  const bookmarks = new BookmarkStore({ dir: configDir });
+  const api = createApi({
+    token: config.token,
+    sessions,
+    bookmarks,
+    listDir: (path) => listDirectory(path),
+    getRecent: () => recentDirectories({ launchHistory: config.launchHistory }),
+    onLaunch: (dir) => {
+      recordLaunch(config, dir);
+      saveConfig(config, configDir);
+    },
+  });
 
   const server = serve({ fetch: api.fetch, port, hostname: host }) as unknown as Server;
 
