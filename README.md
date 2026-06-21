@@ -51,16 +51,23 @@ npm start
 ```
 
 Run it from a shell where `claude` already works, so the launched sessions inherit your
-sign-in. On start it prints a URL containing an access token:
+sign-in. On start it prints an access URL for this Mac, plus a LAN URL and a **QR code** for
+your phone:
 
 ```
   Code Remote Starter is listening on 0.0.0.0:4317
 
+  On this Mac:
     http://localhost:4317/?token=…
+
+  On your phone (same Wi-Fi / Tailscale) — scan the QR or open the URL:
+    http://192.168.1.20:4317/?token=…
+    █▀▀▀▀▀█ ▀▌▄█ █▀▀▀▀▀█
+    …
 ```
 
-Open that URL on your Mac, or — to use it from your phone — reach your Mac over your LAN or a
-private network (see [Reaching it from your phone](#reaching-it-from-your-phone)).
+Scan the QR with your phone's camera (on the same network) — it opens the full URL, so the long
+token can't get truncated in transit.
 
 For day-to-day development with hot reload:
 
@@ -71,7 +78,7 @@ npm run dev      # Vite on :5173 proxying the API to the server on :4317
 ## Reaching it from your phone
 
 The server binds to `0.0.0.0` so it is reachable on your network, and the access token is what
-protects it. How you reach your Mac is up to you:
+protects it. The easiest way in is to **scan the QR code** printed at startup. Otherwise:
 
 - **Same Wi‑Fi:** open `http://<your-mac-ip>:4317/?token=…` on your phone.
 - **Anywhere:** put your Mac and phone on a private network such as

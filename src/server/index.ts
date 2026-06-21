@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { execFile } from 'node:child_process';
+import { networkInterfaces } from 'node:os';
+import QRCode from 'qrcode';
 import { getConfigDir, loadConfig, saveConfig, recordLaunch } from './config.ts';
 import { createTmux } from './tmux.ts';
 import { SessionManager } from './sessions.ts';
@@ -38,6 +40,18 @@ export function accessUrl(host: string, port: number, token: string): string {
   return `http://${h}:${port}/?token=${token}`;
 }
 
+/** First non-internal IPv4 address, preferring private LAN ranges. */
+export function lanAddress(): string | null {
+  const candidates: string[] = [];
+  for (const ifaces of Object.values(networkInterfaces())) {
+    for (const net of ifaces ?? []) {
+      if (net.family === 'IPv4' && !net.internal) candidates.push(net.address);
+    }
+  }
+  const priv = candidates.find((a) => /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(a));
+  return priv ?? candidates[0] ?? null;
+}
+
 function tokenFromReq(req: IncomingMessage): string | undefined {
   const raw = req.headers.cookie ?? '';
   for (const part of raw.split(';')) {
@@ -53,7 +67,7 @@ function tokenFromReq(req: IncomingMessage): string | undefined {
   return undefined;
 }
 
-export function main(argv = process.argv.slice(2)): void {
+export async function main(argv = process.argv.slice(2)): Promise<void> {
   const cli = parseArgs(argv);
   const configDir = getConfigDir();
   const config = loadConfig(configDir);
@@ -120,16 +134,26 @@ export function main(argv = process.argv.slice(2)): void {
     void sessions.refresh();
   }, 2000);
 
-  const url = accessUrl(host, port, config.token);
-  console.log(`\n  Code Remote Starter is listening on ${host}:${port}`);
-  console.log(`  Open from this machine or your phone (same network / Tailscale):\n`);
-  console.log(`    ${url}\n`);
-  console.log(`  The token in that URL is the only thing protecting a permissionless`);
-  console.log(`  Claude. Keep it private; reach the app over a trusted network.\n`);
+  const localUrl = accessUrl('localhost', port, config.token);
+  const exposed = host === '0.0.0.0' || host === '::';
+  const lan = exposed ? lanAddress() : null;
+  const phoneUrl = lan ? `http://${lan}:${port}/?token=${config.token}` : null;
 
-  if (cli.open) {
-    execFile('open', [accessUrl('localhost', port, config.token)]);
+  console.log(`\n  Code Remote Starter is listening on ${host}:${port}\n`);
+  console.log(`  On this Mac:\n    ${localUrl}\n`);
+  if (phoneUrl) {
+    console.log(`  On your phone (same Wi-Fi / Tailscale) — scan the QR or open the URL:`);
+    console.log(`    ${phoneUrl}\n`);
+    try {
+      console.log(await QRCode.toString(phoneUrl, { type: 'terminal', small: true }));
+    } catch {
+      // QR rendering is best-effort.
+    }
   }
+  console.log(`  The token is the only thing protecting a permissionless Claude.`);
+  console.log(`  Keep it private; reach the app over a trusted network.\n`);
+
+  if (cli.open) execFile('open', [localUrl]);
 }
 
 const isMain = (() => {
