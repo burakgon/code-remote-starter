@@ -1,8 +1,10 @@
 import { serve } from '@hono/node-server';
+import { serveStatic } from '@hono/node-server/serve-static';
 import { WebSocketServer } from 'ws';
 import type { IncomingMessage, Server } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { realpathSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
+import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { getConfigDir, loadConfig, saveConfig, recordLaunch } from './config.ts';
 import { createTmux } from './tmux.ts';
@@ -37,11 +39,17 @@ export function accessUrl(host: string, port: number, token: string): string {
   return `http://${h}:${port}/?token=${token}`;
 }
 
-function tokenFromCookie(req: IncomingMessage): string | undefined {
+function tokenFromReq(req: IncomingMessage): string | undefined {
   const raw = req.headers.cookie ?? '';
   for (const part of raw.split(';')) {
     const [k, v] = part.trim().split('=');
     if (k === 'crs_token') return v;
+  }
+  try {
+    const q = new URL(req.url ?? '', 'http://localhost').searchParams.get('token');
+    if (q) return q;
+  } catch {
+    // ignore malformed URL
   }
   return undefined;
 }
@@ -62,6 +70,7 @@ export function main(argv = process.argv.slice(2)): void {
     token: config.token,
     sessions,
     bookmarks,
+    baseCommand: config.baseCommand,
     listDir: (path) => listDirectory(path),
     getRecent: () => recentDirectories({ launchHistory: config.launchHistory }),
     onLaunch: (dir) => {
@@ -70,11 +79,19 @@ export function main(argv = process.argv.slice(2)): void {
     },
   });
 
+  // Serve the built SPA (when present) behind the same auth + port.
+  const webDir = fileURLToPath(new URL('../../dist/web', import.meta.url));
+  if (existsSync(webDir)) {
+    const indexHtml = readFileSync(join(webDir, 'index.html'), 'utf8');
+    api.use('/assets/*', serveStatic({ root: 'dist/web' }));
+    api.get('*', (c) => c.html(indexHtml));
+  }
+
   const server = serve({ fetch: api.fetch, port, hostname: host }) as unknown as Server;
 
   const wss = new WebSocketServer({ noServer: true });
   server.on('upgrade', (req, socket, head) => {
-    if (tokenFromCookie(req) !== config.token) {
+    if (tokenFromReq(req) !== config.token) {
       socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
       socket.destroy();
       return;

@@ -1,3 +1,4 @@
+import { homedir } from 'node:os';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { authMiddleware } from './auth.ts';
@@ -18,11 +19,14 @@ export interface ApiDeps {
   listDir?: (path: string) => DirListing;
   getRecent?: () => RecentDir[];
   onLaunch?: (dir: string) => void;
+  baseCommand?: string;
 }
 
 export function createApi(deps: ApiDeps): Hono {
   const app = new Hono();
-  app.use('/api/*', authMiddleware(deps.token));
+  app.use('*', authMiddleware(deps.token));
+
+  app.get('/api/meta', (c) => c.json({ baseCommand: deps.baseCommand ?? '', home: homedir() }));
 
   app.get('/api/sessions', (c) => c.json({ sessions: deps.sessions.list() }));
 

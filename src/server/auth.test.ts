@@ -41,4 +41,14 @@ describe('authMiddleware', () => {
     });
     expect(res.status).toBe(403);
   });
+
+  it('serves an HTML token page for unauthorized non-API requests', async () => {
+    const a = new Hono();
+    a.use('*', authMiddleware(TOKEN));
+    a.get('/', (c) => c.text('home'));
+    const res = await a.request('/');
+    expect(res.status).toBe(401);
+    expect(res.headers.get('content-type')).toContain('text/html');
+    expect(await res.text()).toContain('access token');
+  });
 });
