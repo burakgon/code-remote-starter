@@ -2,6 +2,13 @@
 
 Start Claude Code sessions in any directory on your Mac — from your phone.
 
+<p align="center">
+  <a href="https://github.com/burakgon/code-remote-starter/actions/workflows/ci.yml"><img src="https://github.com/burakgon/code-remote-starter/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" />
+  <img src="https://img.shields.io/badge/platform-macOS-lightgrey.svg" alt="macOS" />
+  <img src="https://img.shields.io/badge/PWA-installable-5fb87a.svg" alt="Installable PWA" />
+</p>
+
 The Claude mobile app's Remote Control can drive sessions that already exist, but it can't
 **start a new session in a new directory**. For that you still have to walk to your Mac, open a
 terminal, `cd`, and run Claude Code. Code Remote Starter closes that gap: a small web app that
@@ -124,10 +131,15 @@ Set `CRS_CONFIG_DIR` to relocate the config directory.
 
 - Touch-first directory picker: browse the filesystem, paste a path, with Git and
   "used with Claude before" indicators.
-- Bookmark directories you launch into often.
-- Recent directories, drawn from your launch history and from where you've used Claude Code.
-- Live session list over a WebSocket — rename or stop sessions.
-- One dark, considered interface that works on phone, foldable, and desktop.
+- Bookmark directories you launch into often, plus recent ones drawn from your launch history
+  and from where you've used Claude Code.
+- Live session list over a WebSocket — rename, stop (with confirmation), or dismiss / clear
+  finished sessions.
+- **Installable PWA** — add it to your phone's home screen for a full-screen, app-like launcher.
+- A scannable QR code and LAN URL printed on startup, so opening it on your phone is one scan.
+- Brute-force protection on the access token (per-IP lockout), correct behind a reverse proxy /
+  tunnel or on a direct connection.
+- One dark, considered interface that works on phone, foldable, and desktop. No emoji.
 
 ## Development
 
