@@ -7,7 +7,6 @@ export interface DirEntry {
   path: string;
   isGitRepo: boolean;
   usedWithClaude: boolean;
-  childDirCount: number;
   hidden: boolean;
 }
 
@@ -38,19 +37,6 @@ function safeIsDir(p: string): boolean {
   }
 }
 
-function countChildDirs(dir: string): number {
-  try {
-    let n = 0;
-    for (const e of readdirSync(dir, { withFileTypes: true })) {
-      if (e.isDirectory()) n++;
-      else if (e.isSymbolicLink() && safeIsDir(join(dir, e.name))) n++;
-    }
-    return n;
-  } catch {
-    return 0;
-  }
-}
-
 export function listDirectory(
   inputPath: string,
   opts: { claudeProjectsDir?: string } = {},
@@ -61,6 +47,8 @@ export function listDirectory(
   const entries: DirEntry[] = [];
   for (const d of dirents) {
     const full = join(path, d.name);
+    // Only descend into real directories or symlinks to directories. Avoid any
+    // per-entry directory scans here — listing a large home would block otherwise.
     const isDir = d.isDirectory() || (d.isSymbolicLink() && safeIsDir(full));
     if (!isDir) continue;
     entries.push({
@@ -68,7 +56,6 @@ export function listDirectory(
       path: full,
       isGitRepo: existsSync(join(full, '.git')),
       usedWithClaude: existsSync(join(claudeProjectsDir, claudeEncode(full))),
-      childDirCount: countChildDirs(full),
       hidden: d.name.startsWith('.'),
     });
   }

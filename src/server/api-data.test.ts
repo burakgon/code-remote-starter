@@ -43,7 +43,6 @@ beforeEach(() => {
         path: '/Users/x/Developer/code-starter',
         isGitRepo: true,
         usedWithClaude: true,
-        childDirCount: 3,
         hidden: false,
       },
     ],

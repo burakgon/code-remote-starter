@@ -14,7 +14,6 @@ export interface DirEntry {
   path: string;
   isGitRepo: boolean;
   usedWithClaude: boolean;
-  childDirCount: number;
   hidden: boolean;
 }
 

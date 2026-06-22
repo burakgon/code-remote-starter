@@ -42,7 +42,6 @@ describe('listDirectory', () => {
     expect(names).not.toContain('file.txt');
     const a = listing.entries.find((e) => e.name === 'proj-a')!;
     expect(a.isGitRepo).toBe(true);
-    expect(a.childDirCount).toBe(3); // .git, sub1, sub2
     expect(a.hidden).toBe(false);
     expect(listing.entries.find((e) => e.name === '.hidden')!.hidden).toBe(true);
     expect(listing.parent).toBe(dirname(root));
