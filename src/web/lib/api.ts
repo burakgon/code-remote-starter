@@ -68,6 +68,11 @@ export const api = {
       body: JSON.stringify({ name }),
     }),
   listDir: (path: string) => req<DirListing>(`/api/fs?path=${encodeURIComponent(path)}`),
+  mkdir: (path: string, name: string) =>
+    req<{ path: string }>('/api/fs/mkdir', {
+      method: 'POST',
+      body: JSON.stringify({ path, name }),
+    }),
   listBookmarks: () => req<{ bookmarks: Bookmark[] }>('/api/bookmarks'),
   addBookmark: (path: string, label?: string) =>
     req<{ bookmark: Bookmark }>('/api/bookmarks', {

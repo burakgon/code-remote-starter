@@ -13,7 +13,7 @@ import { SessionManager } from './sessions.ts';
 import { createApi } from './api.ts';
 import { SessionBroadcaster } from './ws.ts';
 import { BookmarkStore } from './bookmarks.ts';
-import { listDirectory } from './fs.ts';
+import { listDirectory, createDirectory } from './fs.ts';
 import { recentDirectories } from './recent.ts';
 
 export interface CliArgs {
@@ -77,6 +77,7 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
   saveConfig(config, configDir);
 
   const sessions = new SessionManager({ tmux: createTmux(), baseCommand: config.baseCommand });
+  await sessions.adopt(); // re-attach to crs- tmux sessions that survived a restart
   const broadcaster = new SessionBroadcaster(sessions);
   const bookmarks = new BookmarkStore({ dir: configDir });
   const api = createApi({
@@ -85,6 +86,7 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
     bookmarks,
     baseCommand: config.baseCommand,
     listDir: (path) => listDirectory(path),
+    makeDir: (parent, name) => createDirectory(parent, name),
     getRecent: () => recentDirectories({ launchHistory: config.launchHistory }),
     onLaunch: (dir) => {
       recordLaunch(config, dir);

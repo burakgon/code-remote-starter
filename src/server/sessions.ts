@@ -91,17 +91,50 @@ export class SessionManager {
     if (changed) this.emit();
   }
 
+  /** Re-adopt crs- tmux sessions that already exist (e.g. after a restart). */
+  async adopt(): Promise<void> {
+    let changed = false;
+    for (const { name, path } of await this.tmux.listSessions()) {
+      if (!name.startsWith('crs-')) continue;
+      const id = name.slice('crs-'.length);
+      if (this.sessions.has(id)) continue;
+      this.sessions.set(id, {
+        id,
+        name: path.split('/').filter(Boolean).pop() || name,
+        dir: path,
+        tmuxName: name,
+        startedAt: this.now(),
+        status: 'running',
+      });
+      changed = true;
+    }
+    if (changed) this.emit();
+  }
+
   async refresh(): Promise<boolean> {
     const live = new Set(await this.tmux.listSessionNames());
     let changed = false;
     for (const session of this.sessions.values()) {
-      if (session.status === 'running' && !live.has(session.tmuxName)) {
+      if (session.status !== 'running') continue;
+      if (!live.has(session.tmuxName)) {
         session.status = 'ended';
         changed = true;
+      } else if (!session.claudeUrl) {
+        // Claude prints its claude.ai session URL a moment after starting; grab it.
+        const url = await this.captureUrl(session.tmuxName);
+        if (url) {
+          session.claudeUrl = url;
+          changed = true;
+        }
       }
     }
     if (changed) this.emit();
     return changed;
+  }
+
+  private async captureUrl(tmuxName: string): Promise<string | undefined> {
+    const pane = await this.tmux.capturePane(tmuxName);
+    return pane.match(/https:\/\/claude\.ai\/code\/session_[A-Za-z0-9_-]+/)?.[0];
   }
 
   onChange(cb: (sessions: Session[]) => void): () => void {

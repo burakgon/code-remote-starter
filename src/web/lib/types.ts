@@ -7,6 +7,7 @@ export interface Session {
   tmuxName: string;
   startedAt: number;
   status: SessionStatus;
+  claudeUrl?: string;
 }
 
 export interface DirEntry {

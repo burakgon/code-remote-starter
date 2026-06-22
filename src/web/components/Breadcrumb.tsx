@@ -1,4 +1,4 @@
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, House } from 'lucide-react';
 
 interface Crumb {
   label: string;
@@ -56,6 +56,14 @@ export function Breadcrumb({
           );
         })}
       </div>
+      <button
+        type="button"
+        aria-label="Home"
+        onClick={() => onNavigate('~')}
+        className="grid size-[26px] shrink-0 place-items-center rounded-md border border-line text-dim transition-colors hover:text-fg"
+      >
+        <House size={13} />
+      </button>
       <button
         type="button"
         aria-label="Go up"

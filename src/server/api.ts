@@ -12,12 +12,14 @@ const createSchema = z.object({ dir: z.string().min(1), name: z.string().min(1) 
 const renameSchema = z.object({ name: z.string().min(1) });
 const bookmarkSchema = z.object({ path: z.string().min(1), label: z.string().optional() });
 const reorderSchema = z.object({ ids: z.array(z.string()) });
+const mkdirSchema = z.object({ path: z.string().min(1), name: z.string().min(1) });
 
 export interface ApiDeps {
   token: string;
   sessions: SessionManager;
   bookmarks?: BookmarkStore;
   listDir?: (path: string) => DirListing;
+  makeDir?: (parent: string, name: string) => string;
   getRecent?: () => RecentDir[];
   onLaunch?: (dir: string) => void;
   baseCommand?: string;
@@ -73,6 +75,19 @@ export function createApi(deps: ApiDeps): Hono {
         return c.json(listDir(c.req.query('path') ?? '~'));
       } catch (err) {
         return c.json({ error: err instanceof Error ? err.message : 'cannot read directory' }, 400);
+      }
+    });
+  }
+
+  if (deps.makeDir) {
+    const makeDir = deps.makeDir;
+    app.post('/api/fs/mkdir', async (c) => {
+      const parsed = mkdirSchema.safeParse(await c.req.json().catch(() => null));
+      if (!parsed.success) return c.json({ error: 'invalid body' }, 400);
+      try {
+        return c.json({ path: makeDir(parsed.data.path, parsed.data.name) }, 201);
+      } catch (err) {
+        return c.json({ error: err instanceof Error ? err.message : 'cannot create folder' }, 400);
       }
     });
   }

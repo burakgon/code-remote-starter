@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir, homedir } from 'node:os';
 import { join, dirname } from 'node:path';
-import { listDirectory, claudeEncode, resolvePath } from './fs.ts';
+import { listDirectory, claudeEncode, resolvePath, createDirectory } from './fs.ts';
 
 let root: string;
 let claudeProjects: string;
@@ -57,5 +57,17 @@ describe('listDirectory', () => {
 
   it('throws on an unreadable path', () => {
     expect(() => listDirectory(join(root, 'does-not-exist'))).toThrow();
+  });
+});
+
+describe('createDirectory', () => {
+  it('creates a subdirectory', () => {
+    const p = createDirectory(root, 'newproj');
+    expect(existsSync(p)).toBe(true);
+    expect(p).toBe(join(root, 'newproj'));
+  });
+  it('rejects invalid or traversing names', () => {
+    expect(() => createDirectory(root, '../escape')).toThrow();
+    expect(() => createDirectory(root, '')).toThrow();
   });
 });

@@ -46,6 +46,14 @@ export function Home({ onNew }: { onNew: () => void }) {
       toast({ message: errorMessage(err), tone: 'error' });
     }
   };
+  const relaunch = async (s: Session) => {
+    try {
+      await api.createSession(s.dir, s.name);
+      toast({ message: `Launched in ${s.name}`, tone: 'good' });
+    } catch (err) {
+      toast({ message: errorMessage(err), tone: 'error' });
+    }
+  };
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-6 px-4 pb-28 pt-[max(1.25rem,env(safe-area-inset-top))]">
@@ -70,6 +78,7 @@ export function Home({ onNew }: { onNew: () => void }) {
                 home={home}
                 onRequestStop={setConfirmStop}
                 onDismiss={del}
+                onRelaunch={relaunch}
                 onRename={rename}
               />
             ))}
@@ -98,6 +107,7 @@ export function Home({ onNew }: { onNew: () => void }) {
                 home={home}
                 onRequestStop={setConfirmStop}
                 onDismiss={del}
+                onRelaunch={relaunch}
                 onRename={rename}
               />
             ))}

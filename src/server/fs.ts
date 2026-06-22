@@ -1,6 +1,17 @@
-import { existsSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+
+/** Create a single new subdirectory under `parent`. Throws on invalid name or if it exists. */
+export function createDirectory(parent: string, name: string): string {
+  const clean = name.trim();
+  if (!clean || clean.includes('/') || clean === '.' || clean === '..') {
+    throw new Error('Invalid folder name');
+  }
+  const dir = join(resolvePath(parent), clean);
+  mkdirSync(dir);
+  return dir;
+}
 
 export interface DirEntry {
   name: string;

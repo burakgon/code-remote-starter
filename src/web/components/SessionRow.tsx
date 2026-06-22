@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pencil, Square, X } from 'lucide-react';
+import { ExternalLink, Pencil, RotateCcw, Square, X } from 'lucide-react';
 import type { Session } from '../lib/types.ts';
 import { relativeTime, tildePath } from '../lib/format.ts';
 import { StatusDot } from './StatusDot.tsx';
@@ -9,12 +9,14 @@ export function SessionRow({
   home,
   onRequestStop,
   onDismiss,
+  onRelaunch,
   onRename,
 }: {
   session: Session;
   home: string | undefined;
   onRequestStop: (session: Session) => void;
   onDismiss: (id: string) => void;
+  onRelaunch: (session: Session) => void;
   onRename: (id: string, name: string) => void;
 }) {
   const running = session.status === 'running';
@@ -65,6 +67,17 @@ export function SessionRow({
       </span>
       {running ? (
         <>
+          {session.claudeUrl && (
+            <a
+              href={session.claudeUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open in Claude"
+              className="grid size-7 place-items-center rounded-md text-faint transition-colors hover:text-accent"
+            >
+              <ExternalLink size={13} />
+            </a>
+          )}
           <button
             type="button"
             aria-label="Rename session"
@@ -83,14 +96,24 @@ export function SessionRow({
           </button>
         </>
       ) : (
-        <button
-          type="button"
-          aria-label="Dismiss session"
-          onClick={() => onDismiss(session.id)}
-          className="grid size-7 place-items-center rounded-md text-faint transition-colors hover:text-fg"
-        >
-          <X size={14} />
-        </button>
+        <>
+          <button
+            type="button"
+            aria-label="Start again"
+            onClick={() => onRelaunch(session)}
+            className="grid size-7 place-items-center rounded-md text-faint transition-colors hover:text-good"
+          >
+            <RotateCcw size={13} />
+          </button>
+          <button
+            type="button"
+            aria-label="Dismiss session"
+            onClick={() => onDismiss(session.id)}
+            className="grid size-7 place-items-center rounded-md text-faint transition-colors hover:text-fg"
+          >
+            <X size={14} />
+          </button>
+        </>
       )}
     </div>
   );

@@ -20,10 +20,16 @@ class FakeTmux implements Tmux {
   async listSessionNames() {
     return [...this.live];
   }
+  async listSessions() {
+    return [...this.live].map((n) => ({ name: n, path: `/x/${n}` }));
+  }
   async killSession(name: string) {
     this.live.delete(name);
   }
   async renameSession() {}
+  async capturePane() {
+    return '';
+  }
 }
 
 let dir: string;
@@ -55,6 +61,7 @@ beforeEach(() => {
     sessions,
     bookmarks,
     listDir: () => listing,
+    makeDir: (parent, name) => `${parent}/${name}`,
     getRecent: () => recent,
     onLaunch: (d) => launched.push(d),
   });
@@ -101,6 +108,16 @@ describe('data API', () => {
       bookmarks: Bookmark[];
     };
     expect(list.bookmarks).toHaveLength(1);
+  });
+
+  it('POST /api/fs/mkdir creates a folder', async () => {
+    const res = await app.request('/api/fs/mkdir', {
+      method: 'POST',
+      headers: AUTH,
+      body: JSON.stringify({ path: '/Users/x/Developer', name: 'newproj' }),
+    });
+    expect(res.status).toBe(201);
+    expect(((await res.json()) as { path: string }).path).toBe('/Users/x/Developer/newproj');
   });
 
   it('GET /api/recent returns recent dirs', async () => {

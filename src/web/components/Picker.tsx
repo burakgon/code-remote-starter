@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Clock, Star, Trash2 } from 'lucide-react';
+import { Check, Clock, FolderPlus, Star, Trash2, X } from 'lucide-react';
 import { api, errorMessage } from '../lib/api.ts';
 import { basename, relativeTime, tildePath } from '../lib/format.ts';
 import { useToast } from '../lib/toast.tsx';
@@ -28,6 +28,8 @@ export function Picker({
   const [path, setPath] = useState('~');
   const [filter, setFilter] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [folderName, setFolderName] = useState('');
 
   const listing = useQuery({ queryKey: ['fs', path], queryFn: () => api.listDir(path) });
   const bookmarks = useQuery({ queryKey: ['bookmarks'], queryFn: api.listBookmarks });
@@ -39,7 +41,21 @@ export function Picker({
   const navigate = (p: string) => {
     setSelected(null);
     setFilter('');
+    setCreatingFolder(false);
     setPath(p);
+  };
+
+  const createFolder = async () => {
+    const name = folderName.trim();
+    if (!name || !currentDir) return;
+    try {
+      await api.mkdir(currentDir, name);
+      setFolderName('');
+      setCreatingFolder(false);
+      qc.invalidateQueries({ queryKey: ['fs', path] });
+    } catch (err) {
+      toast({ message: errorMessage(err), tone: 'error' });
+    }
   };
 
   const entries = (listing.data?.entries ?? []).filter((e) =>
@@ -105,6 +121,53 @@ export function Picker({
               />
             )}
             <FilterInput value={filter} onChange={setFilter} onSubmitPath={navigate} />
+            {creatingFolder ? (
+              <div className="flex items-center gap-2">
+                <input
+                  autoFocus
+                  value={folderName}
+                  onChange={(e) => setFolderName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void createFolder();
+                    if (e.key === 'Escape') {
+                      setCreatingFolder(false);
+                      setFolderName('');
+                    }
+                  }}
+                  placeholder="New folder name"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  className="min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 py-2 text-[12.5px] outline-none focus:border-accent"
+                />
+                <button
+                  type="button"
+                  aria-label="Create folder"
+                  onClick={() => void createFolder()}
+                  className="grid size-9 shrink-0 place-items-center rounded-lg border border-accent/40 text-accent"
+                >
+                  <Check size={15} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Cancel new folder"
+                  onClick={() => {
+                    setCreatingFolder(false);
+                    setFolderName('');
+                  }}
+                  className="grid size-9 shrink-0 place-items-center rounded-lg border border-line text-dim transition-colors hover:text-fg"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setCreatingFolder(true)}
+                className="flex items-center gap-1.5 self-start text-[11px] font-medium text-dim transition-colors hover:text-fg"
+              >
+                <FolderPlus size={13} /> New folder
+              </button>
+            )}
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-2.5 pb-3">

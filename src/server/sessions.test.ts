@@ -5,12 +5,17 @@ import type { Tmux } from './tmux.ts';
 class FakeTmux implements Tmux {
   live = new Set<string>();
   commands: { name: string; dir: string; command: string }[] = [];
+  paths = new Map<string, string>();
   async newSession(name: string, dir: string, command: string) {
     this.live.add(name);
+    this.paths.set(name, dir);
     this.commands.push({ name, dir, command });
   }
   async listSessionNames() {
     return [...this.live];
+  }
+  async listSessions() {
+    return [...this.live].map((n) => ({ name: n, path: this.paths.get(n) ?? `/x/${n}` }));
   }
   async killSession(name: string) {
     this.live.delete(name);
@@ -18,6 +23,10 @@ class FakeTmux implements Tmux {
   async renameSession(oldName: string, newName: string) {
     this.live.delete(oldName);
     this.live.add(newName);
+  }
+  capturePaneText = '';
+  async capturePane() {
+    return this.capturePaneText;
   }
 }
 
@@ -89,6 +98,31 @@ describe('SessionManager', () => {
     const s = await m.create({ dir: '/p/a', name: 'a' });
     m.remove(s.id);
     expect(m.list()).toHaveLength(0);
+  });
+
+  it('adopts pre-existing crs- tmux sessions', async () => {
+    tmux.live.add('crs-zzzz');
+    tmux.paths.set('crs-zzzz', '/Users/x/Developer/proj');
+    tmux.live.add('unrelated-session');
+    const m = manager();
+    await m.adopt();
+    const list = m.list();
+    expect(list).toHaveLength(1);
+    expect(list[0]!.id).toBe('zzzz');
+    expect(list[0]!.dir).toBe('/Users/x/Developer/proj');
+    expect(list[0]!.name).toBe('proj');
+    expect(list[0]!.status).toBe('running');
+  });
+
+  it('captures the claude.ai session URL on refresh', async () => {
+    const m = manager();
+    const s = await m.create({ dir: '/p/a', name: 'a' });
+    expect(s.claudeUrl).toBeUndefined();
+    tmux.capturePaneText = 'header\n  https://claude.ai/code/session_01ABCdef \nfooter';
+    await m.refresh();
+    expect(m.list().find((x) => x.id === s.id)!.claudeUrl).toBe(
+      'https://claude.ai/code/session_01ABCdef',
+    );
   });
 
   it('clearEnded forgets only ended sessions', async () => {

@@ -11,10 +11,16 @@ class FakeTmux implements Tmux {
   async listSessionNames() {
     return [...this.live];
   }
+  async listSessions() {
+    return [...this.live].map((n) => ({ name: n, path: `/x/${n}` }));
+  }
   async killSession(name: string) {
     this.live.delete(name);
   }
   async renameSession() {}
+  async capturePane() {
+    return '';
+  }
 }
 
 class FakeClient {
