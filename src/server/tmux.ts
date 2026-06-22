@@ -37,25 +37,25 @@ export function createTmux(): Tmux {
       }
     },
     async listSessions() {
-      try {
-        const { stdout } = await run('tmux', [
-          'list-sessions',
-          '-F',
-          '#{session_name}\t#{session_path}',
-        ]);
-        return stdout
-          .split('\n')
-          .map((l) => l.trim())
-          .filter(Boolean)
-          .map((l) => {
-            const tab = l.indexOf('\t');
-            return { name: l.slice(0, tab), path: l.slice(tab + 1) };
-          });
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        if (/no server running|no such file/i.test(msg)) return [];
-        throw err;
+      // Names come back clean; fetch each path separately to avoid fragile
+      // delimiter parsing in a combined format string.
+      const names = await this.listSessionNames();
+      const out: TmuxSession[] = [];
+      for (const name of names) {
+        try {
+          const { stdout } = await run('tmux', [
+            'display-message',
+            '-p',
+            '-t',
+            name,
+            '#{pane_current_path}',
+          ]);
+          out.push({ name, path: stdout.trim() });
+        } catch {
+          out.push({ name, path: '' });
+        }
       }
+      return out;
     },
     async killSession(name) {
       await run('tmux', ['kill-session', '-t', name]);
