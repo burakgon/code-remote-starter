@@ -37,7 +37,7 @@ export class SessionManager {
   async create(input: CreateSessionInput): Promise<Session> {
     const id = this.idFactory();
     const tmuxName = `crs-${id}`;
-    const command = buildSessionCommand(this.baseCommand, input.name);
+    const command = buildSessionCommand(this.baseCommand);
     await this.tmux.newSession(tmuxName, input.dir, command);
     const session: Session = {
       id,

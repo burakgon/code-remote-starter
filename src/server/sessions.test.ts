@@ -30,8 +30,7 @@ class FakeTmux implements Tmux {
   }
 }
 
-const BASE =
-  'CLAUDE_CODE_EFFORT_LEVEL=max claude remote-control --permission-mode bypassPermissions';
+const BASE = 'claude --dangerously-skip-permissions --effort max';
 let tmux: FakeTmux;
 let ids: string[];
 function manager() {
@@ -55,7 +54,7 @@ describe('SessionManager', () => {
     expect(s.status).toBe('running');
     expect(s.startedAt).toBe(1000);
     expect(tmux.live.has('crs-aaaa')).toBe(true);
-    expect(tmux.commands[0]!.command).toBe(`${BASE} --name 'code-starter'`);
+    expect(tmux.commands[0]!.command).toBe(BASE);
     expect(tmux.commands[0]!.dir).toBe('/p/code-starter');
     expect(m.list()).toHaveLength(1);
   });
