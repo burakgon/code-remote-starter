@@ -134,7 +134,9 @@ export class SessionManager {
 
   private async captureUrl(tmuxName: string): Promise<string | undefined> {
     const pane = await this.tmux.capturePane(tmuxName);
-    return pane.match(/https:\/\/claude\.ai\/code\/session_[A-Za-z0-9_-]+/)?.[0];
+    // remote-control server prints `…/code?environment=env_…`; a single session
+    // prints `…/code/session_…`. Match either.
+    return pane.match(/https:\/\/claude\.ai\/code[^\s]*/)?.[0];
   }
 
   onChange(cb: (sessions: Session[]) => void): () => void {

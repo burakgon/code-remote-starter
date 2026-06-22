@@ -20,7 +20,20 @@ export interface Tmux {
 export function createTmux(): Tmux {
   return {
     async newSession(name, dir, command) {
-      await run('tmux', ['new-session', '-d', '-s', name, '-c', dir, command]);
+      // Wide pane so the claude.ai URL prints on one line (capturePane reads it).
+      await run('tmux', [
+        'new-session',
+        '-d',
+        '-s',
+        name,
+        '-c',
+        dir,
+        '-x',
+        '240',
+        '-y',
+        '50',
+        command,
+      ]);
     },
     async listSessionNames() {
       try {

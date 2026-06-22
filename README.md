@@ -24,27 +24,32 @@ your phone as usual.
 
 ## How it works
 
-When you launch a session, the server runs your Claude Code command inside a **detached `tmux`
-session** in the directory you chose:
+When you launch a session, the server runs Claude Code's Remote Control server inside a
+**detached `tmux` session** in the directory you chose:
 
 ```
-claude --dangerously-skip-permissions --effort max --remote-control "<session name>"
+CLAUDE_CODE_EFFORT_LEVEL=max claude remote-control --permission-mode bypassPermissions --name "<name>"
 ```
 
-`tmux` gives Claude Code the terminal it needs while keeping the process alive independently of
-the browser. Because Remote Control is enabled, the session registers with Anthropic and appears
-in the Claude mobile app, where you do the actual work. Code Remote Starter is purely the
-launcher and session manager — it never proxies your conversation.
+`tmux` keeps the process alive independently of the browser. The `claude remote-control`
+subcommand registers the directory as an **environment** with Anthropic, so it shows up in the
+Claude mobile app and at [claude.ai/code](https://claude.ai/code) under that name — that's where
+you do the actual work. `--permission-mode bypassPermissions` skips the permission prompts (the
+`--dangerously-skip-permissions` behaviour) and `CLAUDE_CODE_EFFORT_LEVEL=max` runs sessions at
+maximum effort. Code Remote Starter is purely the launcher and session manager — it never proxies
+your conversation.
 
-The base command is configurable; it defaults to the equivalent of the common `cym` alias
-(`claude --dangerously-skip-permissions --effort max`).
+> Note: the interactive `--remote-control` _flag_ does **not** reliably register a session from a
+> detached `tmux` (it reports "active" locally but never appears on your phone). The
+> `claude remote-control` _subcommand_ is the headless server mode and is what actually works.
+
+The base command is configurable via `baseCommand`.
 
 ## Requirements
 
 - macOS
 - [`tmux`](https://github.com/tmux/tmux) — `brew install tmux`
-- Claude Code on your `PATH`, signed in, with Remote Control enabled at startup
-  (`"remoteControlAtStartup": true` in `~/.claude/settings.json`)
+- Claude Code on your `PATH`, signed in with a subscription that includes Remote Control
 - Node.js 20+
 
 ## Quick start
@@ -91,9 +96,9 @@ protects it. The easiest way in is to **scan the QR code** printed at startup. O
 - **Anywhere:** put your Mac and phone on a private network such as
   [Tailscale](https://tailscale.com) and use the Mac's Tailscale address.
 
-Code Remote Starter launches Claude Code with `--dangerously-skip-permissions`, so treat the URL
-like a password and only expose it over networks you trust. A first-class tunnel is on the
-roadmap.
+Code Remote Starter launches Claude Code with permissions bypassed (`--permission-mode
+bypassPermissions`), so treat the URL like a password and only expose it over networks you trust.
+A first-class tunnel is on the roadmap.
 
 ## Security
 
@@ -112,17 +117,18 @@ roadmap.
 
 `~/.config/code-remote-starter/config.json`:
 
-| Key           | Default                                              | Description                  |
-| ------------- | ---------------------------------------------------- | ---------------------------- |
-| `port`        | `4317`                                               | Port to listen on.           |
-| `host`        | `0.0.0.0`                                            | Interface to bind.           |
-| `baseCommand` | `claude --dangerously-skip-permissions --effort max` | Command run in each session. |
-| `token`       | generated                                            | Access token.                |
+| Key           | Default                                                                                  | Description                  |
+| ------------- | ---------------------------------------------------------------------------------------- | ---------------------------- |
+| `port`        | `4317`                                                                                   | Port to listen on.           |
+| `host`        | `0.0.0.0`                                                                                | Interface to bind.           |
+| `baseCommand` | `CLAUDE_CODE_EFFORT_LEVEL=max claude remote-control --permission-mode bypassPermissions` | Command run in each session. |
+| `token`       | generated                                                                                | Access token.                |
 
-Command-line flags override the config for a run: `--port`, `--host`, `--command`, `--open`.
+The session name is appended as `--name "<name>"`. Command-line flags override the config for a
+run: `--port`, `--host`, `--command`, `--open`.
 
 ```bash
-npm start -- --port 8080 --command "claude --effort max"
+npm start -- --port 8080 --command "claude remote-control --permission-mode bypassPermissions"
 ```
 
 Set `CRS_CONFIG_DIR` to relocate the config directory.

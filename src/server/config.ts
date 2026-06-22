@@ -17,7 +17,8 @@ function defaultConfig(): AppConfig {
     token: generateToken(),
     port: 4317,
     host: '0.0.0.0',
-    baseCommand: 'claude --dangerously-skip-permissions --effort max',
+    baseCommand:
+      'CLAUDE_CODE_EFFORT_LEVEL=max claude remote-control --permission-mode bypassPermissions',
     launchHistory: [],
   };
 }

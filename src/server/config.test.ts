@@ -22,7 +22,9 @@ describe('config', () => {
     expect(cfg.token).toMatch(/^[0-9a-f]{64}$/);
     expect(cfg.port).toBe(4317);
     expect(cfg.host).toBe('0.0.0.0');
-    expect(cfg.baseCommand).toBe('claude --dangerously-skip-permissions --effort max');
+    expect(cfg.baseCommand).toBe(
+      'CLAUDE_CODE_EFFORT_LEVEL=max claude remote-control --permission-mode bypassPermissions',
+    );
     expect(cfg.launchHistory).toEqual([]);
     expect(existsSync(join(dir, 'config.json'))).toBe(true);
   });

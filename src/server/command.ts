@@ -3,5 +3,7 @@ function singleQuote(value: string): string {
 }
 
 export function buildSessionCommand(baseCommand: string, name: string): string {
-  return `${baseCommand} --remote-control ${singleQuote(name)}`;
+  // baseCommand is `claude remote-control ...`; the session/environment name is
+  // passed via --name (shown in claude.ai/code and the Claude mobile app).
+  return `${baseCommand} --name ${singleQuote(name)}`;
 }
